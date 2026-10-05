@@ -45,3 +45,5 @@ venv/
 
 # MATLAB, if present
 *.asv
+.vercel
+.env*
