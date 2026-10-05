@@ -125,7 +125,7 @@ function renderAdmin() {
       <main class="setup-screen">
         <section class="setup-form">
           <h1>Admin</h1>
-          <p class="admin-message">Request participant link from the admin. You can book your experiment at : <a href="http://experiments.dipeshrestha.com.np/meg">here </a></p>
+          <p class="admin-message">Incorrect token code. Please contact the administrator.</a></p>
         </section>
       </main>
     `;
