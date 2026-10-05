@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -27,14 +26,18 @@ export default async function handler(request, response) {
   const csvBody = payload?.csv ?? "";
 
   if (process.env.MENTLASIMJS_BLOB_READ_WRITE_TOKEN) {
+    const token = process.env.MENTLASIMJS_BLOB_READ_WRITE_TOKEN;
+    const { put } = await import("@vercel/blob");
     const [jsonBlob, csvBlob] = await Promise.all([
       put(`${basePath}.json`, jsonBody, {
         access: "private",
-        contentType: "application/json"
+        contentType: "application/json",
+        token
       }),
       put(`${basePath}.csv`, csvBody, {
         access: "private",
-        contentType: "text/csv"
+        contentType: "text/csv",
+        token
       })
     ]);
 

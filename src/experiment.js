@@ -20,11 +20,15 @@ function pad2(value) {
 function setupInitialValues() {
   const search = new URLSearchParams(window.location.search);
   const config = decodeConfig(search.get("cfg"));
+  const trialsPerRun = Number(config?.trialsPerRun ?? search.get("trialsPerRun") ?? 10);
+  const devMode = config?.devMode ?? search.get("dev") === "1";
   return {
     subid: Number(config?.subid ?? search.get("subid") ?? params.subid),
     session: Number(config?.session ?? search.get("session") ?? params.session),
     seqid: Number(config?.seqid ?? search.get("seqid") ?? params.seqid),
     maxRuns: Number(config?.maxRuns ?? search.get("runs") ?? 1),
+    trialsPerRun: Number.isFinite(trialsPerRun) && trialsPerRun > 0 ? trialsPerRun : 10,
+    devMode: Boolean(devMode),
     cohortDir: config?.cohortDir ?? search.get("cohort") ?? params.cohortDir,
     participantUuid: config?.participantUuid ?? "",
     sessionId: config?.sessionId ?? ""
@@ -99,6 +103,10 @@ function renderSetupForm(initialValues) {
         <label>
           <span>Max runs</span>
           <input name="maxRuns" type="number" min="1" step="1" required value="${initialValues.maxRuns}" />
+        </label>
+        <label class="checkbox-label">
+          <input name="devMode" type="checkbox" ${initialValues.devMode ? "checked" : ""} />
+          <span>Dev mode: first 10 trials per run</span>
         </label>
         <label>
           <span>Cohort</span>
@@ -195,6 +203,8 @@ function renderAdmin() {
       session: Number(formData.get("session")),
       seqid: Number(formData.get("seqid")),
       maxRuns: Number(formData.get("maxRuns")),
+      devMode: formData.get("devMode") === "on",
+      trialsPerRun: 10,
       cohortDir: String(formData.get("cohortDir")).trim(),
       participantUuid: String(formData.get("participantUuid")).trim()
     });
@@ -364,8 +374,10 @@ async function main() {
     .sort((a, b) => a - b)
     .slice(0, maxRuns);
 
-  const rowsByRun = rows.filter((row) =>
-    selectedRuns.includes(Number(row.run))
+  const rowsByRun = selectedRuns.flatMap((run) =>
+    (config.devMode
+      ? rows.filter((row) => Number(row.run) === run).slice(0, 10)
+      : rows.filter((row) => Number(row.run) === run))
   );
 
   const maxTrialsParam = new URLSearchParams(window.location.search).get("n");

@@ -63,6 +63,17 @@ body {
   font-size: 16px;
 }
 
+.setup-form .checkbox-label {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.setup-form .checkbox-label input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+}
+
 .setup-form input,
 .setup-form textarea {
   height: 42px;
