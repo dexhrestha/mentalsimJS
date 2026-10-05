@@ -1,0 +1,98 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: rgb(25, 25, 25);
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+#jspsych-target {
+  width: 100vw;
+  height: 100vh;
+}
+
+.experiment-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  background: rgb(25, 25, 25);
+}
+
+.start-screen,
+.setup-screen {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  text-align: center;
+  background: rgb(25, 25, 25);
+}
+
+.start-screen h1 {
+  margin: 0;
+  font-size: 42px;
+  font-weight: 600;
+}
+
+.start-screen p {
+  margin: 0;
+  font-size: 20px;
+}
+
+.setup-form {
+  width: min(420px, calc(100vw - 48px));
+  display: grid;
+  gap: 16px;
+  text-align: left;
+}
+
+.setup-form h1 {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 42px;
+  font-weight: 600;
+}
+
+.setup-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 16px;
+}
+
+.setup-form input,
+.setup-form textarea {
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgb(110, 110, 110);
+  border-radius: 6px;
+  background: rgb(38, 38, 38);
+  color: white;
+  font: inherit;
+}
+
+.setup-form textarea {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.setup-form button {
+  height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: white;
+  color: rgb(25, 25, 25);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-message {
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+}

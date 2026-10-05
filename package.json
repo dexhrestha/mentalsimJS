@@ -1,0 +1,19 @@
+{
+  "name": "jspsych-navigate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "jspsych": "^8.2.1",
+    "@jspsych/plugin-html-keyboard-response": "^2.1.0",
+    "@jspsych/plugin-preload": "^2.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}
