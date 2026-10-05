@@ -17,6 +17,7 @@ export const params = {
   speedTextDeg: 1.5,
   speedCueLoops: 1,
   lang: 0,
+  breakDurMs: 60000,
   blinkFixRedDurMs: 800,
   blinkFixOffDurMs: 50,
   blinkFixGreenDurMs: 1000,

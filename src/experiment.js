@@ -4,6 +4,7 @@ import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response";
 import { params } from "./params.js";
 import { parseCsv } from "./csv.js";
 import { NavigateBlinkFixationPlugin } from "./trials/blink-fixation.js";
+import { NavigateBreakScreenPlugin } from "./trials/break-screen.js";
 import { NavigateFeedbackPlugin } from "./trials/feedback.js";
 import { NavigateMovementPlugin } from "./trials/movement.js";
 import { NavigateSamplePlugin } from "./trials/sample.js";
@@ -24,7 +25,9 @@ function setupInitialValues() {
     session: Number(config?.session ?? search.get("session") ?? params.session),
     seqid: Number(config?.seqid ?? search.get("seqid") ?? params.seqid),
     maxRuns: Number(config?.maxRuns ?? search.get("runs") ?? 1),
-    cohortDir: config?.cohortDir ?? search.get("cohort") ?? params.cohortDir
+    cohortDir: config?.cohortDir ?? search.get("cohort") ?? params.cohortDir,
+    participantUuid: config?.participantUuid ?? "",
+    sessionId: config?.sessionId ?? ""
   };
 }
 
@@ -60,6 +63,15 @@ function participantUrl(config) {
   const search = new URLSearchParams();
   search.set("cfg", encodeConfig(config));
   return `${window.location.origin}/?${search.toString()}`;
+}
+
+function createParticipantConfig(config) {
+  const participantUuid = config.participantUuid || crypto.randomUUID();
+  return {
+    ...config,
+    participantUuid,
+    sessionId: `${participantUuid}_ses-${pad2(config.session)}`
+  };
 }
 
 function navigateToExperiment(config) {
@@ -157,6 +169,10 @@ function renderAdmin() {
           <span>Cohort</span>
           <input name="cohortDir" type="text" required value="${initialValues.cohortDir}" />
         </label>
+        <label>
+          <span>Participant UUID</span>
+          <input name="participantUuid" type="text" value="${initialValues.participantUuid}" placeholder="Auto-generated if empty" />
+        </label>
         <button type="submit">Generate URL</button>
         <label>
           <span>Participant URL</span>
@@ -174,13 +190,14 @@ function renderAdmin() {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const config = {
+    const config = createParticipantConfig({
       subid: Number(formData.get("subid")),
       session: Number(formData.get("session")),
       seqid: Number(formData.get("seqid")),
       maxRuns: Number(formData.get("maxRuns")),
-      cohortDir: String(formData.get("cohortDir")).trim()
-    };
+      cohortDir: String(formData.get("cohortDir")).trim(),
+      participantUuid: String(formData.get("participantUuid")).trim()
+    });
     output.value = participantUrl(config);
   });
 
@@ -232,6 +249,34 @@ function showFatalError(error) {
   console.error(error);
 }
 
+async function saveExperimentData({ jsPsych, config, selectedRuns }) {
+  const payload = {
+    savedAt: new Date().toISOString(),
+    experiment: "navigate",
+    sessionId: config.sessionId,
+    participantUuid: config.participantUuid,
+    subject: config.subid,
+    session: config.session,
+    sequence: config.seqid,
+    cohort: config.cohortDir,
+    selectedRuns,
+    rows: jsPsych.data.get().values(),
+    csv: jsPsych.data.get().csv()
+  };
+
+  const response = await fetch("/api/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Data save failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 
 async function main() {
   // Admin setup is only available at /admin.
@@ -265,7 +310,9 @@ async function main() {
     config.seqid < 1 ||
     !Number.isFinite(config.maxRuns) ||
     config.maxRuns < 1 ||
-    !config.cohortDir
+    !config.cohortDir ||
+    !config.participantUuid ||
+    !config.sessionId
   ) {
     document.querySelector("#jspsych-target").innerHTML = `
       <main class="start-screen">
@@ -280,8 +327,26 @@ async function main() {
 
   const jsPsych = initJsPsych({
     display_element: "jspsych-target",
-    on_finish() {
-      jsPsych.data.displayData("csv");
+    async on_finish() {
+      try {
+        const result = await saveExperimentData({ jsPsych, config, selectedRuns });
+        document.querySelector("#jspsych-target").innerHTML = `
+          <main class="start-screen">
+            <h1>Done</h1>
+            <p>Data saved.</p>
+            <p>${result.path ?? result.url ?? ""}</p>
+          </main>
+        `;
+      } catch (error) {
+        document.querySelector("#jspsych-target").innerHTML = `
+          <main class="start-screen">
+            <h1>Done</h1>
+            <p>Data could not be saved automatically.</p>
+            <p>${error.message}</p>
+          </main>
+        `;
+        console.error(error);
+      }
     }
   });
 
@@ -316,14 +381,6 @@ async function main() {
         <main class="start-screen">
           <h1>Navigation Experiment</h1>
           <p>Subject ${params.subid}, session ${params.session}, sequence ${params.seqid}.</p>
-          <p>
-            Speed cue, blink fixation, sample, movement, feedback, and ITI.
-            Non-probe trials loaded: ${rows.length}.
-          </p>
-          <p>
-            Showing ${selectedRows.length} trial${selectedRows.length === 1 ? "" : "s"}
-            from ${selectedRuns.length} run${selectedRuns.length === 1 ? "" : "s"}.
-          </p>
           <p>Press space to start. Then hold space during fixation.</p>
         </main>
       `,
@@ -331,44 +388,56 @@ async function main() {
     }
   ];
 
-  selectedRows.forEach((row) => {
-    if (Number(row.speed_cue_dur) > 0) {
+  selectedRuns.forEach((run, runIndex) => {
+    const runRows = selectedRows.filter((row) => Number(row.run) === run);
+
+    runRows.forEach((row) => {
+      if (Number(row.speed_cue_dur) > 0) {
+        timeline.push({
+          type: NavigateSpeedCuePlugin,
+          row,
+          params
+        });
+      }
+
       timeline.push({
-        type: NavigateSpeedCuePlugin,
+        type: NavigateBlinkFixationPlugin,
         row,
         params
       });
+
+      timeline.push({
+        type: NavigateSamplePlugin,
+        row,
+        params
+      });
+
+      timeline.push({
+        type: NavigateMovementPlugin,
+        row,
+        params
+      });
+
+      timeline.push({
+        type: NavigateFeedbackPlugin,
+        row,
+        params
+      });
+
+      timeline.push({
+        type: NavigateItiPlugin,
+        row,
+        params
+      });
+    });
+
+    if (runIndex < selectedRuns.length - 1) {
+      timeline.push({
+        type: NavigateBreakScreenPlugin,
+        run,
+        params
+      });
     }
-
-    timeline.push({
-      type: NavigateBlinkFixationPlugin,
-      row,
-      params
-    });
-
-    timeline.push({
-      type: NavigateSamplePlugin,
-      row,
-      params
-    });
-
-    timeline.push({
-      type: NavigateMovementPlugin,
-      row,
-      params
-    });
-
-    timeline.push({
-      type: NavigateFeedbackPlugin,
-      row,
-      params
-    });
-
-    timeline.push({
-      type: NavigateItiPlugin,
-      row,
-      params
-    });
   });
 
   timeline.push({
