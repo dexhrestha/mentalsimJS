@@ -35,6 +35,7 @@ data/
 results/
 output/
 *.csv
+!public/input/**/*.csv
 
 # Python, if using helper scripts
 __pycache__/
