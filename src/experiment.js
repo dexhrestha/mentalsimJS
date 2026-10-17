@@ -3,6 +3,8 @@ import "jspsych/css/jspsych.css";
 import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response";
 import { params } from "./params.js";
 import { parseCsv } from "./csv.js";
+
+import { NavigateConsentPlugin } from "./trials/consent.js";
 import { NavigateBlinkFixationPlugin } from "./trials/blink-fixation.js";
 import { NavigateBreakScreenPlugin } from "./trials/break-screen.js";
 import { NavigateFeedbackPlugin } from "./trials/feedback.js";
@@ -10,6 +12,7 @@ import { NavigateMovementPlugin } from "./trials/movement.js";
 import { NavigateSamplePlugin } from "./trials/sample.js";
 import { NavigateSpeedCuePlugin } from "./trials/speed-cue.js";
 import { NavigateItiPlugin } from "./trials/iti.js";
+import { resumeAudioContext } from "./sound.js";
 import { preloadStimulusImages } from "./stimuli.js";
 import "./style.css";
 
@@ -26,7 +29,7 @@ function setupInitialValues() {
     subid: Number(config?.subid ?? search.get("subid") ?? params.subid),
     session: Number(config?.session ?? search.get("session") ?? params.session),
     seqid: Number(config?.seqid ?? search.get("seqid") ?? params.seqid),
-    maxRuns: Number(config?.maxRuns ?? search.get("runs") ?? 1),
+    maxRuns: Number(config?.maxRuns ?? search.get("runs") ?? params.maxRuns),
     trialsPerRun: Number.isFinite(trialsPerRun) && trialsPerRun > 0 ? trialsPerRun : 10,
     devMode: Boolean(devMode),
     cohortDir: config?.cohortDir ?? search.get("cohort") ?? params.cohortDir,
@@ -78,8 +81,118 @@ function createParticipantConfig(config) {
   };
 }
 
+function navigationInstructionTrials() {
+  const pages = [
+    {
+      title: "Introduction",
+      body: `
+        <p>You are a starship captain travelling through space.</p>
+        <p>Your mission is to stop at the correct landmark.</p>
+        <p>Press and hold the GO key to begin.</p>
+      `,
+      visual: `
+        <div class="instruction-space">
+          <div class="instruction-star"></div>
+          <div class="instruction-depth-path"></div>
+        </div>
+      `
+    },
+    {
+      title: "Starting and target landmarks",
+      body: `
+        <p>At the beginning of each trial, you will see the starting landmark and the target landmark.</p>
+        <p>When the target image disappears, continue holding the GO key to travel through the sequence.</p>
+        <p>Remember the route you learned and release the GO key when you believe you have reached the target landmark.</p>
+      `,
+      visual: `
+        <div class="instruction-example">
+          <div>
+            <div class="instruction-image start">Start</div>
+            <small>starting landmark</small>
+          </div>
+          <div class="instruction-arrow">&darr;</div>
+          <div>
+            <div class="instruction-image target">Target</div>
+            <small>target landmark</small>
+          </div>
+        </div>
+      `
+    },
+    {
+      title: "Feedback",
+      body: `
+        <p>Your goal is to stop at the target landmark.</p>
+        <p>After stopping, you will receive feedback indicating how far your stopping position was from the target.</p>
+        <p>A green dot represents your stopping position. Feedback will indicate the number of landmarks separating your position from the target.</p>
+      `,
+      visual: `
+        <div class="instruction-feedback">
+          <div class="instruction-feedback-bar">
+            <span></span>
+          </div>
+          <div class="instruction-feedback-labels">
+            <small>-1</small><small>target</small><small>+1</small>
+          </div>
+        </div>
+      `
+    },
+    {
+      title: "Navigation conditions",
+      body: `
+        <p>The spaceship can travel at two speeds:</p>
+        <ul>
+          <li><strong>Slow</strong></li>
+          <li><strong>Fast</strong></li>
+        </ul>
+        <p>You will also encounter two types of space regions:</p>
+        <ul>
+          <li><strong>Light region:</strong> Landmarks remain visible as you travel.</li>
+          <li><strong>Dark region:</strong> After the first three visible landmarks, the remaining landmarks become invisible.</li>
+        </ul>
+        <p>Speed and visibility conditions will be indicated at the beginning of each block.</p>
+        <p>When travelling through dark regions, continue tracking your position even though the landmarks cannot be seen.</p>
+        <p>Remember: your spaceship continues moving for as long as you hold the GO key.</p>
+      `,
+      visual: `
+        <div class="instruction-conditions">
+          <div><strong>Light</strong><span>visible landmarks</span></div>
+          <div><strong>Dark</strong><span>mental navigation</span></div>
+        </div>
+      `
+    }
+  ];
+
+  return pages.map((page, index) => ({
+    type: htmlKeyboardResponse,
+    stimulus: `
+      <main class="instruction-screen">
+        <section class="instruction-panel">
+          <p class="instruction-progress">${index + 1} / ${pages.length}</p>
+          <h1>${page.title}</h1>
+          <div class="instruction-visual">${page.visual}</div>
+          <div class="instruction-copy">${page.body}</div>
+          <p class="instruction-continue">Press M to continue.</p>
+        </section>
+      </main>
+    `,
+    choices: ["m"]
+  }));
+}
+
 function navigateToExperiment(config) {
   window.location.assign(participantUrl(config));
+}
+
+function setupAudioUnlock() {
+  const unlock = () => {
+    resumeAudioContext().catch((error) => {
+      console.warn("Could not unlock audio context", error);
+    });
+  };
+
+  window.addEventListener("keydown", unlock, { once: true });
+  window.addEventListener("pointerdown", unlock, { once: true });
+  window.addEventListener("touchstart", unlock, { once: true });
 }
 
 function renderSetupForm(initialValues) {
@@ -157,6 +270,14 @@ function renderAdmin() {
     <main class="setup-screen">
       <form class="setup-form" id="admin-form">
         <h1>Admin</h1>
+        <label class="checkbox-label">
+          <input
+            name="devMode"
+            type="checkbox"
+            ${initialValues.devMode ? "checked" : ""}
+          />
+          <span>Dev mode: first 2 trials per run</span>
+        </label>
         <label>
           <span>Subject ID</span>
           <input name="subid" type="number" min="1" step="1" required value="${initialValues.subid}" />
@@ -204,7 +325,7 @@ function renderAdmin() {
       seqid: Number(formData.get("seqid")),
       maxRuns: Number(formData.get("maxRuns")),
       devMode: formData.get("devMode") === "on",
-      trialsPerRun: 10,
+      
       cohortDir: String(formData.get("cohortDir")).trim(),
       participantUuid: String(formData.get("participantUuid")).trim()
     });
@@ -259,7 +380,14 @@ function showFatalError(error) {
   console.error(error);
 }
 
-async function saveExperimentData({ jsPsych, config, selectedRuns }) {
+function makeCompletionCode() {
+  // Unambiguous characters only (no I, O, 0, 1) so participants can read it back reliably.
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
+async function saveExperimentData({ jsPsych, config, selectedRuns, completionCode }) {
   const payload = {
     savedAt: new Date().toISOString(),
     experiment: "navigate",
@@ -270,6 +398,7 @@ async function saveExperimentData({ jsPsych, config, selectedRuns }) {
     sequence: config.seqid,
     cohort: config.cohortDir,
     selectedRuns,
+    completionCode,
     rows: jsPsych.data.get().values(),
     csv: jsPsych.data.get().csv()
   };
@@ -289,6 +418,8 @@ async function saveExperimentData({ jsPsych, config, selectedRuns }) {
 
 
 async function main() {
+  setupAudioUnlock();
+
   // Admin setup is only available at /admin.
   if (window.location.pathname.startsWith("/admin")) {
     renderAdmin();
@@ -335,28 +466,29 @@ async function main() {
 
   await configureParams(config);
 
+  // Set by the "another run?" question after run 2. Runs 3+ are skipped when it stays false.
+  let wantsMoreRuns = true;
+
   const jsPsych = initJsPsych({
     display_element: "jspsych-target",
     async on_finish() {
+      const completionCode = makeCompletionCode();
+      const runsCompleted = wantsMoreRuns ? selectedRuns : selectedRuns.slice(0, 2);
+
       try {
-        const result = await saveExperimentData({ jsPsych, config, selectedRuns });
-        document.querySelector("#jspsych-target").innerHTML = `
-          <main class="start-screen">
-            <h1>Done</h1>
-            <p>Data saved.</p>
-            <p>${result.path ?? result.url ?? ""}</p>
-          </main>
-        `;
+        await saveExperimentData({ jsPsych, config, selectedRuns: runsCompleted, completionCode });
       } catch (error) {
-        document.querySelector("#jspsych-target").innerHTML = `
-          <main class="start-screen">
-            <h1>Done</h1>
-            <p>Data could not be saved automatically.</p>
-            <p>${error.message}</p>
-          </main>
-        `;
         console.error(error);
       }
+
+      document.querySelector("#jspsych-target").innerHTML = `
+        <main class="start-screen">
+          <h1>Thank you for the experiment.</h1>
+          <p>Your completion code is:</p>
+          <p class="completion-code">${completionCode}</p>
+          <p>Please save this completion code.</p>
+        </main>
+      `;
     }
   });
 
@@ -374,11 +506,13 @@ async function main() {
     .sort((a, b) => a - b)
     .slice(0, maxRuns);
 
-  const rowsByRun = selectedRuns.flatMap((run) =>
-    (config.devMode
-      ? rows.filter((row) => Number(row.run) === run).slice(0, 10)
-      : rows.filter((row) => Number(row.run) === run))
-  );
+  const rowsByRun = selectedRuns.flatMap((run) => {
+  const runRows = rows.filter((row) => Number(row.run) === run);
+
+  return config.devMode
+    ? runRows.slice(0, 2)
+    : runRows;
+});
 
   const maxTrialsParam = new URLSearchParams(window.location.search).get("n");
 
@@ -388,66 +522,78 @@ async function main() {
 
   const timeline = [
     {
+      type: NavigateConsentPlugin,
+      pdf_url: "/consent/consent.pdf", // optional
+    },
+    ...navigationInstructionTrials(),
+    {
       type: htmlKeyboardResponse,
       stimulus: `
-        <main class="start-screen">
-          <h1>Navigation Experiment</h1>
-          <p>Subject ${params.subid}, session ${params.session}, sequence ${params.seqid}.</p>
-          <p>Press space to start. Then hold space during fixation.</p>
+        <main class="start-screen">    
+          <p>Press M to continue.</p>
         </main>
       `,
-      choices: [" "]
+      choices: ["m"]
     }
   ];
 
+  const trialsForRun = (run) =>
+    selectedRows
+      .filter((row) => Number(row.run) === run)
+      .flatMap((row) => {
+        const items = [];
+
+        if (Number(row.speed_cue_dur) > 0) {
+          items.push({ type: NavigateSpeedCuePlugin, row, params });
+        }
+
+        items.push(
+          { type: NavigateBlinkFixationPlugin, row, params },
+          { type: NavigateSamplePlugin, row, params },
+          { type: NavigateMovementPlugin, row, params },
+          { type: NavigateFeedbackPlugin, row, params },
+          { type: NavigateItiPlugin, row, params }
+        );
+
+        return items;
+      });
+
+  const continueQuestion = {
+    type: htmlKeyboardResponse,
+    stimulus: `
+      <main class="start-screen">
+        <h1>Another run?</h1>
+        <p>Do you want to continue with another run? It will take about another 10 minutes.</p>
+        <p>Press Y to continue or N to finish.</p>
+      </main>
+    `,
+    choices: ["y", "n"],
+    on_finish: (data) => {
+      wantsMoreRuns = data.response === "y";
+    }
+  };
+
   selectedRuns.forEach((run, runIndex) => {
-    const runRows = selectedRows.filter((row) => Number(row.run) === run);
+    const isLastRun = runIndex === selectedRuns.length - 1;
+    const breakItem = { type: NavigateBreakScreenPlugin, run, params };
 
-    runRows.forEach((row) => {
-      if (Number(row.speed_cue_dur) > 0) {
-        timeline.push({
-          type: NavigateSpeedCuePlugin,
-          row,
-          params
+    if (runIndex < 2) {
+      // Runs 1 and 2 always play.
+      timeline.push(...trialsForRun(run));
+
+      if (runIndex === 1 && selectedRuns.length > 2) {
+        timeline.push(continueQuestion, {
+          timeline: [breakItem],
+          conditional_function: () => wantsMoreRuns
         });
+      } else if (!isLastRun) {
+        timeline.push(breakItem);
       }
-
+    } else {
+      // Runs 3+ only play if the participant chose to continue.
       timeline.push({
-        type: NavigateBlinkFixationPlugin,
-        row,
-        params
-      });
-
-      timeline.push({
-        type: NavigateSamplePlugin,
-        row,
-        params
-      });
-
-      timeline.push({
-        type: NavigateMovementPlugin,
-        row,
-        params
-      });
-
-      timeline.push({
-        type: NavigateFeedbackPlugin,
-        row,
-        params
-      });
-
-      timeline.push({
-        type: NavigateItiPlugin,
-        row,
-        params
-      });
-    });
-
-    if (runIndex < selectedRuns.length - 1) {
-      timeline.push({
-        type: NavigateBreakScreenPlugin,
-        run,
-        params
+        timeline: isLastRun ? trialsForRun(run) : [...trialsForRun(run), breakItem],
+        conditional_function: () => wantsMoreRuns
       });
     }
   });
@@ -457,10 +603,10 @@ async function main() {
     stimulus: `
       <main class="start-screen">
         <h1>Done</h1>
-        <p>Press space to show data.</p>
+        <p>Press M to show data.</p>
       </main>
     `,
-    choices: [" "]
+    choices: ["m"]
   });
 
   jsPsych.run(timeline);

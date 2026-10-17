@@ -88,7 +88,7 @@ export class NavigateFeedbackPlugin {
     const currentImgId = imgArrShifted[currentIdx];
     const targetIdx = imgArrShifted.indexOf(Number(row.target_id));
     const targetPosPx = targetIdx >= 0 ? currPos[targetIdx] : NaN;
-    const targetDistancePx = targetIdx >= 0 ? targetPosPx - currPos[currentIdx] : NaN;
+    const targetDistancePx = targetIdx >= 0 ? targetPosPx : NaN;
     const targetDistanceLm = targetDistancePx / spacingPx;
     const signedLm = targetDistanceLm * direction;
     const absLm = Math.round(Math.abs(targetDistanceLm) * 100) / 100;

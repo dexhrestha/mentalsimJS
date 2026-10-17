@@ -1,5 +1,6 @@
 import { ParameterType } from "jspsych";
 import { layoutParams } from "../params.js";
+import { resumeAudioContext, scheduleAlphaPeakTones, stopScheduledTones } from "../sound.js";
 import { drawStimulusImage } from "../stimuli.js";
 
 function matlabFix(value) {
@@ -92,7 +93,7 @@ export class NavigateMovementPlugin {
     let initFlag = true;
     let tp = -1;
     let released = false;
-    let spaceWasPressed = false;
+    let responseKeyWasPressed = false;
     let rafId = null;
     let onset = null;
     let prevTime = null;
@@ -104,6 +105,10 @@ export class NavigateMovementPlugin {
     let finalShowSeq = showSeq;
     let finalInitFlag = initFlag;
     let finalFrameTime = null;
+    let alphaSoundSchedule = [];
+    let alphaSoundContext = null;
+    let alphaSoundTones = [];
+    let finished = false;
 
     const drawFixation = () => {
       ctx.fillStyle = params.fixColor;
@@ -143,7 +148,10 @@ export class NavigateMovementPlugin {
     };
 
     const finish = (offset) => {
+      if (finished) return;
+      finished = true;
       if (rafId !== null) cancelAnimationFrame(rafId);
+      stopScheduledTones(alphaSoundContext, alphaSoundTones);
       cleanup();
 
       const idxTargetFinal = finalImgArrShifted.indexOf(targetId);
@@ -151,7 +159,7 @@ export class NavigateMovementPlugin {
       const finalCurrentIdx = selectCurrentIndex(finalCurrPos, direction);
       const finalCurrentImgId = finalImgArrShifted[finalCurrentIdx];
       const finalCurrentPosPx = finalCurrPos[finalCurrentIdx];
-      const finalTargetDistancePx = finalTargetPosPx - finalCurrentPosPx;
+      const finalTargetDistancePx = finalTargetPosPx;
       const finalTargetDistanceSlots = finalTargetDistancePx / spacingPx;
 
       displayElement.innerHTML = "";
@@ -176,6 +184,9 @@ export class NavigateMovementPlugin {
         finalShowSeq,
         finalInitFlag,
         finalFrameTime,
+        alphaSoundEnabled: Boolean(params.alphaSoundEnabled),
+        alphaSoundDurationMs: Number(params.alphaSoundDurationMs),
+        alphaSoundSchedule,
         finalCurrentIdx,
         finalCurrentImgId,
         finalCurrentPosPx,
@@ -188,7 +199,28 @@ export class NavigateMovementPlugin {
       if (onset === null) {
         onset = time;
         prevTime = time;
-        spaceWasPressed = pressedKeys.has("Space");
+        responseKeyWasPressed = pressedKeys.has("KeyM");
+
+        if (params.alphaSoundEnabled) {
+          const peakIntervalSec = Math.abs(spacingPx / speedPxPerSec);
+          resumeAudioContext()
+            .then((context) => {
+              alphaSoundContext = context;
+              const scheduled = scheduleAlphaPeakTones(context, {
+                movementDurMs,
+                peakIntervalSec,
+                soundDurationSec: Number(params.alphaSoundDurationMs) / 1000,
+                frequencyHz: Number(params.alphaSoundFrequencyHz),
+                volume: Number(params.alphaSoundVolume)
+              });
+              alphaSoundSchedule = scheduled.events;
+              alphaSoundTones = scheduled.tones;
+              if (finished) stopScheduledTones(alphaSoundContext, alphaSoundTones);
+            })
+            .catch((error) => {
+              console.warn("Could not start alpha-synced sound", error);
+            });
+        }
       }
 
       if (time - onset >= movementDurMs || released) {
@@ -234,17 +266,17 @@ export class NavigateMovementPlugin {
     const pressedKeys = new Set();
 
     const onKeyDown = (event) => {
-      if (event.code !== "Space") return;
+      if (event.code !== "KeyM") return;
       event.preventDefault();
-      pressedKeys.add("Space");
-      spaceWasPressed = true;
+      pressedKeys.add("KeyM");
+      responseKeyWasPressed = true;
     };
 
     const onKeyUp = (event) => {
-      if (event.code !== "Space") return;
+      if (event.code !== "KeyM") return;
       event.preventDefault();
-      pressedKeys.delete("Space");
-      if (spaceWasPressed && onset !== null && !released) {
+      pressedKeys.delete("KeyM");
+      if (responseKeyWasPressed && onset !== null && !released) {
         released = true;
         tp = (performance.now() - onset) / 1000;
       }

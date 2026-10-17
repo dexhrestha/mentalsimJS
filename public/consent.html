@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Form - Navigation Experiment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .consent-form {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #1a1a1a;
+        }
+        h1 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #000;
+        }
+        .section p {
+            margin-bottom: 10px;
+        }
+        ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        .checkbox-group {
+            margin: 15px 0;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+        .checkbox-group label {
+            font-weight: 500;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .consent-id {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="consent-form">
+        <h1>Informed Consent Form</h1>
+        
+        <div class="consent-id">
+            <strong>Consent ID:</strong> <span id="consent-id"></span><br>
+            <strong>Date:</strong> <span id="consent-date"></span>
+        </div>
+
+        <div class="section">
+            <h2>1. Introduction</h2>
+            <p>You are being asked to participate in a research study investigating human navigation behavior using visual stimuli and keyboard responses.</p>
+            <p>This study is being conducted to understand how people process and respond to navigational cues.</p>
+        </div>
+
+        <div class="section">
+            <h2>2. Purpose of the Study</h2>
+            <p>The purpose of this study is to investigate navigation performance, response accuracy, and decision-making processes in controlled experimental conditions.</p>
+        </div>
+
+        <div class="section">
+            <h2>3. Procedures</h2>
+            <p>If you agree to participate, you will be asked to:</p>
+            <ul>
+                <li>Complete this consent form and click "I agree"</li>
+                <li>Provide your subject ID, session number, and sequence ID</li>
+                <li>Participate in a navigation task that lasts approximately 10-30 minutes depending on the number of trials</li>
+                <li>Press and hold a key on your keyboard while navigating visual stimuli</li>
+                <li>Complete feedback and inter-trial intervals</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>4. Risks and Discomforts</h2>
+            <p>Participation in this study involves minimal risk. You may experience:</p>
+            <ul>
+                <li>Slight fatigue from keyboard pressing</li>
+                <li>Mild visual discomfort from staring at fixation points</li>
+            </ul>
+            <p>If you experience any discomfort, you may discontinue participation at any time.</p>
+        </div>
+
+        <div class="section">
+            <h2>5. Benefits</h2>
+            <p>There are no direct benefits to you from participating in this study. However, your participation may contribute to scientific understanding of navigation and decision-making processes.</p>
+        </div>
+
+        <div class="section">
+            <h2>6. Confidentiality</h2>
+            <p>Your responses will be kept confidential:</p>
+            <ul>
+                <li>Your subject ID and session information will be used to identify your data</li>
+                <li>Your data will be stored securely on encrypted servers</li>
+                <li>Data will only be accessible to authorized research personnel</li>
+                <li>Your identity will be kept confidential to the extent allowed by law</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>7. Voluntary Participation and Withdrawal</h2>
+            <p>Participation in this study is entirely voluntary. You may refuse to participate or withdraw at any time without penalty. If you choose to withdraw:</p>
+            <ul>
+                <li>You can stop the experiment at any point by closing the browser</li>
+                <li>Your data will be deleted immediately</li>
+                <li>No questions will be asked about why you are withdrawing</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>8. Compensation</h2>
+            <p>[Add information about compensation if applicable - e.g., "Participants will receive $X for completing the study"]</p>
+        </div>
+
+        <div class="section">
+            <h2>9. Contact Information</h2>
+            <p>If you have any questions or concerns about this study, please contact:</p>
+            <p><strong>Principal Investigator:</strong> [Add name and contact information]</p>
+            <p><strong>Research Institution:</strong> [Add institution name]</p>
+        </div>
+
+        <div class="section">
+            <h2>10. Rights as a Research Participant</h2>
+            <p>You may ask questions at any time during the study. Your decision to participate will not affect your relationship with [Add institution name]. If you have any questions about your rights as a research participant, you may contact:</p>
+            <p><strong>Institutional Review Board:</strong> [Add IRB contact information]</p>
+        </div>
+
+        <div class="section">
+            <h2>11. Consent</h2>
+            <p>I have read and understand the information provided above. By checking the boxes below and clicking "I agree", I confirm that:</p>
+            <ul>
+                <li>I am 18 years of age or older</li>
+                <li>I understand that my participation is voluntary</li>
+                <li>I have had the opportunity to ask questions and receive answers</li>
+                <li>I understand that I can withdraw at any time</li>
+                <li>I understand that my data will be kept confidential</li>
+            </ul>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="agree18" required>
+                    I am 18 years of age or older
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="agreeQuestions" required>
+                    I have had the opportunity to ask questions and receive answers
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="agreeVoluntary" required>
+                    I understand that my participation is voluntary and I can withdraw at any time
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="agreeConfidential" required>
+                    I understand that my data will be kept confidential
+                </label>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>
+                    <input type="checkbox" id="agreeRead" required>
+                    I have read and understood this consent form
+                </label>
+            </div>
+        </div>
+
+        <button id="submit-consent" disabled>I agree to participate</button>
+        
+        <p style="margin-top: 20px; font-size: 14px; color: #666;">
+            By clicking "I agree to participate," you provide your informed consent to take part in this research study.
+        </p>
+    </div>
+
+    <script>
+        // Generate consent ID and set date
+        const consentId = 'CS-' + Date.now().toString(36).toUpperCase();
+        document.getElementById('consent-id').textContent = consentId;
+        document.getElementById('consent-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Enable submit button when all checkboxes are checked
+        const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+        const submitBtn = document.getElementById('submit-consent');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                submitBtn.disabled = !allChecked;
+            });
+        });
+
+        // Handle form submission
+        document.getElementById('submit-consent').addEventListener('click', () => {
+            // Store consent information in sessionStorage
+            sessionStorage.setItem('consentId', consentId);
+            sessionStorage.setItem('consentDate', new Date().toISOString());
+            
+            // Send consent confirmation to parent window
+            window.opener.postMessage({
+                type: 'consent-complete',
+                consentId: consentId,
+                consentDate: new Date().toISOString()
+            }, '*');
+            
+            // Close this window
+            window.close();
+        });
+    </script>
+</body>
+</html>

@@ -107,3 +107,208 @@ body {
   text-align: center;
   font-size: 18px;
 }
+
+.instruction-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  box-sizing: border-box;
+  background: rgb(25, 25, 25);
+}
+
+.instruction-panel {
+  width: min(860px, calc(100vw - 64px));
+  display: grid;
+  gap: 18px;
+  text-align: center;
+}
+
+.instruction-progress,
+.instruction-continue {
+  margin: 0;
+  color: rgb(190, 190, 190);
+  font-size: 16px;
+}
+
+.instruction-panel h1 {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 600;
+}
+
+.instruction-copy {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  font-size: 22px;
+  line-height: 1.45;
+}
+
+.instruction-copy p {
+  margin: 0;
+}
+
+.instruction-copy ul {
+  margin: 0;
+  padding-left: 28px;
+}
+
+.instruction-copy li {
+  margin: 4px 0;
+}
+
+.instruction-visual {
+  min-height: 170px;
+  display: grid;
+  place-items: center;
+}
+
+.instruction-space {
+  width: min(560px, 100%);
+  height: 170px;
+  position: relative;
+  border-top: 1px solid rgb(80, 80, 80);
+  border-bottom: 1px solid rgb(80, 80, 80);
+}
+
+.instruction-star {
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: calc(50% - 12px);
+  top: calc(50% - 12px);
+  background: white;
+  transform: rotate(45deg);
+}
+
+.instruction-depth-path {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(240px, 46vw);
+  height: min(240px, 46vw);
+  border: 1px solid rgb(95, 95, 95);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.instruction-depth-path::before,
+.instruction-depth-path::after {
+  content: "";
+  position: absolute;
+  inset: 28px;
+  border: 1px solid rgb(70, 70, 70);
+}
+
+.instruction-depth-path::after {
+  inset: 58px;
+}
+
+.instruction-example,
+.instruction-speed,
+.instruction-conditions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.instruction-example {
+  flex-direction: column;
+  gap: 14px;
+}
+
+.instruction-image {
+  aspect-ratio: 1;
+  border: 2px solid rgb(220, 220, 220);
+  background: rgb(45, 45, 45);
+}
+
+.instruction-image.target {
+  background: rgb(80, 80, 80);
+}
+
+.instruction-image {
+  width: 116px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.instruction-example small,
+.instruction-feedback-labels small {
+  display: block;
+  margin-top: 8px;
+  color: rgb(190, 190, 190);
+  font-size: 14px;
+}
+
+.instruction-arrow {
+  font-size: 40px;
+}
+
+.instruction-feedback {
+  width: min(420px, 100%);
+}
+
+.instruction-feedback-bar {
+  height: 18px;
+  position: relative;
+  border: 2px solid white;
+  background: rgb(80, 80, 80);
+}
+
+.instruction-feedback-bar span {
+  width: 18px;
+  height: 28px;
+  position: absolute;
+  left: calc(50% - 9px);
+  top: -5px;
+  background: rgb(0, 220, 0);
+}
+
+.instruction-feedback-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
+.instruction-speed div,
+.instruction-conditions div {
+  min-width: 200px;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgb(130, 130, 130);
+  background: rgb(38, 38, 38);
+}
+
+.instruction-speed strong,
+.instruction-conditions strong {
+  font-size: 24px;
+}
+
+.instruction-speed span,
+.instruction-conditions span {
+  color: rgb(200, 200, 200);
+  font-size: 16px;
+}
+
+@media (max-width: 640px) {
+  .instruction-screen {
+    padding: 20px;
+  }
+
+  .instruction-panel {
+    width: calc(100vw - 40px);
+  }
+
+  .instruction-panel h1 {
+    font-size: 32px;
+  }
+
+  .instruction-copy {
+    font-size: 18px;
+  }
+}

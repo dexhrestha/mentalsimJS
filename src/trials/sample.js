@@ -113,13 +113,13 @@ export class NavigateSamplePlugin {
       };
 
       const onKeyDown = (event) => {
-        if (event.code !== "Space") return;
+        if (event.code !== "KeyM") return;
         event.preventDefault();
         if (!startPressed) startPressed = true;
       };
 
       const onKeyUp = (event) => {
-        if (event.code !== "Space") return;
+        if (event.code !== "KeyM") return;
         event.preventDefault();
         if (startPressed) finish();
       };

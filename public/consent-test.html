@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Form Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .pdf-placeholder {
+            background: #e9ecef;
+            padding: 40px;
+            margin: 20px 0;
+            border-radius: 4px;
+            text-align: center;
+            border: 2px dashed #adb5bd;
+        }
+        .checkbox-group {
+            margin: 30px 0;
+        }
+        .checkbox-group label {
+            font-weight: 500;
+            font-size: 16px;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Consent Form - Preview</h1>
+        
+        <div class="pdf-placeholder">
+            <h2>📄 PDF placeholder - Upload consent.pdf</h2>
+            <p>Upload your consent PDF to the /public/consent/ folder to display it here.</p>
+            <p>Currently showing placeholder content.</p>
+        </div>
+        
+        <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="consent-agree" onchange="updateButton()">
+                I agree to participate in this study
+            </label>
+        </div>
+        
+        <div style="text-align: center;">
+            <button id="start-experiment" onclick="startExperiment()" disabled>
+                Start Experiment
+            </button>
+        </div>
+        
+        <p style="text-align: center; margin-top: 15px; color: #666; font-size: 14px;">
+            Press SPACE to toggle checkbox, ENTER to start
+        </p>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong>
+            <ul>
+                <li>Upload consent.pdf to /public/consent/ folder to replace placeholder</li>
+                <li>Check the box to agree</li>
+                <li>Press SPACE to toggle checkbox, ENTER to start</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function updateButton() {
+            const checkbox = document.getElementById('consent-agree');
+            const button = document.getElementById('start-experiment');
+            button.disabled = !checkbox.checked;
+            button.style.backgroundColor = checkbox.checked ? '#28a745' : '#6c757d';
+        }
+
+        function startExperiment() {
+            alert('Consent given! Starting experiment...');
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            const checkbox = document.getElementById('consent-agree');
+            
+            if (e.key === ' ') {
+                e.preventDefault();
+                checkbox.checked = !checkbox.checked;
+                updateButton();
+            } else if (e.key === 'Enter') {
+                if (checkbox.checked) {
+                    startExperiment();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

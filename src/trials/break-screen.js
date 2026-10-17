@@ -44,7 +44,7 @@ export class NavigateBreakScreenPlugin {
     };
 
     const onKeyDown = (event) => {
-      if (!canContinue || event.code !== "Space") return;
+      if (!canContinue || event.code !== "KeyM") return;
       event.preventDefault();
       finish();
     };
@@ -56,7 +56,7 @@ export class NavigateBreakScreenPlugin {
       const messageElement = displayElement.querySelector("#break-message");
       if (messageElement) {
         messageElement.style.color = "rgb(0, 255, 0)";
-        messageElement.textContent = `${message} Press space to continue.`;
+        messageElement.textContent = `${message} Press M to continue.`;
       }
     }, breakDurMs);
   }

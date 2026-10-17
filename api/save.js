@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -14,36 +15,45 @@ export default async function handler(request, response) {
   const payload = request.body;
   const sessionId = safePart(payload?.sessionId);
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  // Random suffix so a resubmission never collides with an earlier file, even within the same millisecond.
+  const fileStem = `${sessionId}_${timestamp}_${randomUUID().slice(0, 8)}`;
   const basePath = [
     "data",
     safePart(payload?.cohort),
     `subj-${safePart(payload?.subject)}`,
     `ses-${safePart(payload?.session)}`,
     "navigate",
-    `${sessionId}_${timestamp}`
+    fileStem
   ].join("/");
   const jsonBody = JSON.stringify(payload, null, 2);
   const csvBody = payload?.csv ?? "";
 
-  if (process.env.MENTLASIMJS_BLOB_READ_WRITE_TOKEN) {
-    const token = process.env.MENTLASIMJS_BLOB_READ_WRITE_TOKEN;
+  const blobStoreId = process.env.MENTLASIMJS_BLOB_STORE_ID;
+  const blobToken = process.env.MENTLASIMJS_BLOB_READ_WRITE_TOKEN;
+
+  if (blobStoreId || blobToken) {
     const { put } = await import("@vercel/blob");
+    const jsonOptions = {
+      access: "private",
+      contentType: "application/json",
+      ...(blobStoreId ? { storeId: blobStoreId } : {}),
+      ...(blobToken ? { token: blobToken } : {})
+    };
+    const csvOptions = {
+      access: "private",
+      contentType: "text/csv",
+      ...(blobStoreId ? { storeId: blobStoreId } : {}),
+      ...(blobToken ? { token: blobToken } : {})
+    };
     const [jsonBlob, csvBlob] = await Promise.all([
-      put(`${basePath}.json`, jsonBody, {
-        access: "private",
-        contentType: "application/json",
-        token
-      }),
-      put(`${basePath}.csv`, csvBody, {
-        access: "private",
-        contentType: "text/csv",
-        token
-      })
+      put(`${basePath}.json`, jsonBody, jsonOptions),
+      put(`${basePath}.csv`, csvBody, csvOptions)
     ]);
 
     response.status(200).json({
       ok: true,
       storage: "vercel-blob",
+      access: "private",
       url: jsonBlob.url,
       csvUrl: csvBlob.url
     });
@@ -52,8 +62,8 @@ export default async function handler(request, response) {
 
   const outDir = path.join("/tmp", "navigate-data");
   await mkdir(outDir, { recursive: true });
-  const jsonPath = path.join(outDir, `${sessionId}_${timestamp}.json`);
-  const csvPath = path.join(outDir, `${sessionId}_${timestamp}.csv`);
+  const jsonPath = path.join(outDir, `${fileStem}.json`);
+  const csvPath = path.join(outDir, `${fileStem}.csv`);
   await Promise.all([
     writeFile(jsonPath, jsonBody),
     writeFile(csvPath, csvBody)

@@ -113,7 +113,7 @@ export class NavigateBlinkFixationPlugin {
     };
 
     const onKeyDown = (event) => {
-      if (event.code !== "Space" || held) return;
+      if (event.code !== "KeyM" || held) return;
       event.preventDefault();
       held = true;
       phaseIndex = 0;
@@ -122,7 +122,7 @@ export class NavigateBlinkFixationPlugin {
     };
 
     const onKeyUp = (event) => {
-      if (event.code !== "Space") return;
+      if (event.code !== "KeyM") return;
       event.preventDefault();
       if (phaseIndex < phases.length) reset();
     };
@@ -133,7 +133,7 @@ export class NavigateBlinkFixationPlugin {
       document.removeEventListener("keyup", onKeyUp);
     };
 
-    draw(null, "Hold space for fixation");
+    draw(null, "Hold M for fixation");
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keyup", onKeyUp);
   }
