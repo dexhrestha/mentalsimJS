@@ -367,7 +367,7 @@ async function configureParams(config) {
   params.seqid = config.seqid;
   params.cohortDir = config.cohortDir;
   params.categories = Array.from({ length: 9 }, (_, index) => sequence[`pos${index + 1}`]);
-  params.participant.direction = Number(sequence.direction) * -1;
+  params.participant.direction = Number(sequence.direction);
 }
 
 function showFatalError(error) {
