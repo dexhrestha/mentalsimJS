@@ -83,6 +83,10 @@ export class NavigateMovementPlugin {
     const movementDurMs = Number(row.ts) + Number(row.buffer_dur);
     const visual = Boolean(Number(row.visual));
     const direction = Math.sign(params.participant.direction || 1);
+    // Ring distance (slots) the target must travel to reach the centre in the
+    // movement direction; wrapIndex is the mod() that create_movement.m uses.
+    const initialTargetIdx = initialImgArrShifted.indexOf(targetId);
+    const targetRequiredSlots = initialTargetIdx >= 0 ? wrapIndex(0, Math.round(-basePos[initialTargetIdx] / spacingPx * direction), nImgs) : NaN;
 
     let imgArrShifted = [...initialImgArrShifted];
     let idxStart = imgArrShifted.indexOf(startId);
@@ -98,6 +102,7 @@ export class NavigateMovementPlugin {
     let onset = null;
     let prevTime = null;
     let finalOffsetPx = 0;
+    let finalTotalSteps = 0;
     let finalCurrPos = [...basePos];
     let finalImgArrShifted = [...imgArrShifted];
     let finalAlpha = Array(nImgs).fill(0);
@@ -161,6 +166,9 @@ export class NavigateMovementPlugin {
       const finalCurrentPosPx = finalCurrPos[finalCurrentIdx];
       const finalTargetDistancePx = finalTargetPosPx;
       const finalTargetDistanceSlots = finalTargetDistancePx / spacingPx;
+      // Unwrapped landing error, as in create_movement.m: positive = late, negative = early.
+      const traveledSlots = direction * (finalTotalSteps * spacingPx + finalOffsetPx) / spacingPx;
+      const targetErrorSlots = traveledSlots - targetRequiredSlots;
 
       displayElement.innerHTML = "";
       this.jsPsych.finishTrial({
@@ -191,7 +199,10 @@ export class NavigateMovementPlugin {
         finalCurrentImgId,
         finalCurrentPosPx,
         finalTargetDistancePx,
-        finalTargetDistanceSlots
+        finalTargetDistanceSlots,
+        traveledSlots,
+        targetRequiredSlots,
+        targetErrorSlots
       });
     };
 
@@ -252,6 +263,7 @@ export class NavigateMovementPlugin {
       const { frameAlpha, frameVisible } = drawFrame(currPos, drawAllowed);
 
       finalOffsetPx = offsetPx;
+      finalTotalSteps = totalSteps;
       finalCurrPos = currPos;
       finalImgArrShifted = [...imgArrShifted];
       finalAlpha = frameAlpha;

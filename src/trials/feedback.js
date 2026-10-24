@@ -90,8 +90,10 @@ export class NavigateFeedbackPlugin {
     const targetPosPx = targetIdx >= 0 ? currPos[targetIdx] : NaN;
     const targetDistancePx = targetIdx >= 0 ? targetPosPx : NaN;
     const targetDistanceLm = targetDistancePx / spacingPx;
-    const signedLm = targetDistanceLm * direction;
-    const absLm = Math.round(Math.abs(targetDistanceLm) * 100) / 100;
+    // Prefer the unwrapped error from the movement trial (create_feedback.m)
+    const movementErrorSlots = Number(movement.targetErrorSlots);
+    const signedLm = Number.isFinite(movementErrorSlots) ? movementErrorSlots : targetDistanceLm * direction;
+    const absLm = Math.round(Math.abs(signedLm) * 100) / 100;
     const landingPx = targetDistancePx;
     const tp = Number(movement.tp);
 
@@ -123,24 +125,36 @@ export class NavigateFeedbackPlugin {
     const red = "rgb(220, 0, 0)";
     const white = "rgb(255, 255, 255)";
 
-    if (tp > 0 && Number.isFinite(absLm)) {
-      if (absLm <= 0.5) {
-        const barW = Math.round(layout.lmWidthPx);
-        const barHalfW = barW / 4;
-        rect(ctx, centerX, centerBarY, barW, centerBarH, "rgb(80, 80, 80)");
-        strokeRect(ctx, centerX, centerBarY, barW, centerBarH, white, 2);
+    // Scoring and drawing as in create_feedback.m. Error is in slots, sign: + late (right), - early (left).
+    const errorPx = signedLm * spacingPx;
+    const absErrorPx = Math.abs(errorPx);
+    const hitHalfPx = spacingPx / 2;
+    const side = Math.sign(signedLm);
+    const feedbackTextY = centerBarY - Math.round(0.8 * layout.lmHeightPx);
+    const feedbackTextSizePx = Math.round(layout.fixSizePx * 0.9);
 
-        const clippedLanding = Math.max(-barHalfW, Math.min(barHalfW, Math.round(-landingPx)));
-        const seekX = centerX + clippedLanding;
-        const seekHalfW = Math.max(3, Math.round(0.035 * spacingPx));
-        rect(ctx, seekX, centerBarY, seekHalfW * 2, centerBarH, green);
-      } else if (absLm <= 1) {
-        drawCenteredText(ctx, signedLm >= 0 ? "+1" : "-1", centerX, centerBarY - Math.round(0.8 * layout.lmHeightPx), yellow, Math.round(layout.fixSizePx * 0.9));
-      } else if (absLm <= 2) {
-        drawCenteredText(ctx, signedLm >= 0 ? "+2" : "-2", centerX, centerBarY - Math.round(0.8 * layout.lmHeightPx), red, Math.round(layout.fixSizePx * 0.9));
-      } else {
-        drawCross(ctx, centerX, centerY, Math.round(0.5 * layout.lmHeightPx), red);
-      }
+    let score;
+    if (tp <= 0) score = NaN;
+    else if (absErrorPx < hitHalfPx) score = 0;
+    else if (absErrorPx < hitHalfPx + spacingPx) score = side;
+    else if (absErrorPx < hitHalfPx + 2 * spacingPx) score = 2 * side;
+    else score = 3 * side;
+
+    if (Number.isNaN(score)) {
+      drawCenteredText(ctx, "TIME OUT", centerX, feedbackTextY, red, feedbackTextSizePx);
+    } else if (score === 0) {
+      // Bar spans the hit window (one slot); the marker is clamped to its ends.
+      const barW = Math.round(spacingPx);
+      const barHalfW = barW / 2;
+      rect(ctx, centerX, centerBarY, barW, centerBarH, "rgb(80, 80, 80)");
+      strokeRect(ctx, centerX, centerBarY, barW, centerBarH, white, 2);
+
+      const seekX = centerX + Math.max(-barHalfW, Math.min(barHalfW, Math.round(errorPx)));
+      const seekHalfW = Math.max(3, Math.round(0.035 * spacingPx));
+      rect(ctx, seekX, centerBarY, seekHalfW * 2, centerBarH, green);
+    } else if (Math.abs(score) < 3) {
+      const text = score > 0 ? `+${score}` : `${score}`;
+      drawCenteredText(ctx, text, centerX, feedbackTextY, Math.abs(score) === 1 ? yellow : red, feedbackTextSizePx);
     } else {
       drawCross(ctx, centerX, centerY, Math.round(0.5 * layout.lmHeightPx), red);
     }
@@ -172,7 +186,9 @@ export class NavigateFeedbackPlugin {
         feedbackCenterPosPx: currPos[currentIdx],
         feedbackDirection: direction,
         feedbackLandingPx: landingPx,
-        feedbackSignedLm: signedLm
+        feedbackSignedLm: signedLm,
+        feedbackErrorPx: errorPx,
+        feedbackScore: score
       });
     }, Number(row.feedback_dur));
   }
