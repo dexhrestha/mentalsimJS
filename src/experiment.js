@@ -367,7 +367,9 @@ async function configureParams(config) {
   params.seqid = config.seqid;
   params.cohortDir = config.cohortDir;
   params.categories = Array.from({ length: 9 }, (_, index) => sequence[`pos${index + 1}`]);
-  params.participant.direction = Number(sequence.direction) * -1;
+  // Target placement in every session's trial file is built for direction -1
+  // (12-17 slots, ~6 s at speed 2), so the runtime direction must be -1.
+  params.participant.direction = -1;
 }
 
 function showFatalError(error) {
